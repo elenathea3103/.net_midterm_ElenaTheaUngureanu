@@ -1,34 +1,34 @@
-using RoomHub.Api.Models;
+using RoomHub.Api.Domain.Bookings;
 
 namespace RoomHub.Api.Repositories;
 
-// Starter: in-memory data. It is lost when the application restarts.
-public class BookingRepository
+public sealed class BookingRepository : IBookingRepository
 {
     private readonly List<Booking> _bookings = new();
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
+
+    public Task<Booking?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            return Task.FromResult(_bookings.FirstOrDefault(booking => booking.Id == id));
+        }
+    }
+
+    public Task<bool> HasActiveOverlapAsync(Guid roomId, DateTime startUtc, DateTime endUtc, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            var overlaps = Booking.IsActiveAndOverlaps(roomId, startUtc, endUtc);
+            return Task.FromResult(_bookings.AsQueryable().Any(overlaps));
+        }
+    }
 
     public void Add(Booking booking)
     {
         lock (_lock)
         {
             _bookings.Add(booking);
-        }
-    }
-
-    public Booking? Get(Guid id)
-    {
-        lock (_lock)
-        {
-            return _bookings.FirstOrDefault(b => b.Id == id);
-        }
-    }
-
-    public List<Booking> ListForRoom(Guid roomId)
-    {
-        lock (_lock)
-        {
-            return _bookings.Where(b => b.RoomId == roomId).ToList();
         }
     }
 }
