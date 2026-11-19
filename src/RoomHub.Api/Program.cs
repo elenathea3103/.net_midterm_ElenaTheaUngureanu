@@ -10,9 +10,17 @@ builder.Services.AddSingleton<RoomRepository>();
 builder.Services.AddSingleton<BookingRepository>();
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = exception => exception is BadHttpRequestException badRequest
+        ? badRequest.StatusCode
+        : StatusCodes.Status500InternalServerError
+});
+app.UseStatusCodePages();
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapGet("/", () => "RoomHub API is running.");
