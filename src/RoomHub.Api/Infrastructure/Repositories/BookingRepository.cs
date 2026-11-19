@@ -11,5 +11,8 @@ public sealed class BookingRepository(RoomHubDbContext context) : IBookingReposi
     public Task<bool> HasActiveOverlapAsync(Guid roomId, DateTime startUtc, DateTime endUtc, CancellationToken cancellationToken) =>
         context.Bookings.AnyAsync(Booking.IsActiveAndOverlaps(roomId, startUtc, endUtc), cancellationToken);
 
+    public Task<int> CountActiveForParticipantOnDayAsync(string bookedBy, DateTime dayUtc, CancellationToken cancellationToken) =>
+        context.Bookings.CountAsync(Booking.IsActiveForParticipantOnDay(bookedBy, dayUtc), cancellationToken);
+
     public void Add(Booking booking) => context.Bookings.Add(booking);
 }

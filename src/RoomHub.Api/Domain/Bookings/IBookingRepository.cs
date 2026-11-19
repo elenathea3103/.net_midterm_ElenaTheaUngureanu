@@ -6,5 +6,7 @@ public interface IBookingRepository
 
     Task<bool> HasActiveOverlapAsync(Guid roomId, DateTime startUtc, DateTime endUtc, CancellationToken cancellationToken);
 
+    Task<int> CountActiveForParticipantOnDayAsync(string bookedBy, DateTime dayUtc, CancellationToken cancellationToken);
+
     void Add(Booking booking);
 }

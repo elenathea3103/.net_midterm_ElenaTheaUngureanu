@@ -8,6 +8,8 @@ public sealed class Booking
 {
     public const int BookedByMaxLength = 200;
 
+    public const int MaxActiveBookingsPerParticipantPerDay = 2;
+
     public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
 
     private Booking()
@@ -76,6 +78,20 @@ public sealed class Booking
                    && booking.Status == BookingStatus.Active
                    && booking.StartUtc < endUtc
                    && startUtc < booking.EndUtc;
+
+    public static Expression<Func<Booking, bool>> IsActiveForParticipantOnDay(string bookedBy, DateTime dayUtc)
+    {
+        var dayStartUtc = AsUtc(dayUtc).Date;
+        var nextDayStartUtc = dayStartUtc.AddDays(1);
+
+        return booking => booking.BookedBy == bookedBy
+                          && booking.Status == BookingStatus.Active
+                          && booking.StartUtc >= dayStartUtc
+                          && booking.StartUtc < nextDayStartUtc;
+    }
+
+    public static bool ReachesDailyLimit(int activeBookingsOnSameDay) =>
+        activeBookingsOnSameDay >= MaxActiveBookingsPerParticipantPerDay;
 
     public Result Cancel()
     {
