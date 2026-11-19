@@ -10,7 +10,7 @@ public sealed class Booking
 
     public const int MaxActiveBookingsPerParticipantPerDay = 2;
 
-    public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
+    public static readonly TimeSpan MinNoticeForCancellation = TimeSpan.FromMinutes(60);
 
     private Booking()
     {
@@ -67,8 +67,8 @@ public sealed class Booking
         if (startUtc < AsUtc(nowUtc))
             return BookingErrors.StartsInPast;
 
-        if (endUtc - startUtc > MaxDuration)
-            return BookingErrors.TooLong;
+        if (endUtc - startUtc > room.MaxBookingDuration)
+            return room.IsLarge ? BookingErrors.TooLongForLargeRoom : BookingErrors.TooLong;
 
         return new Booking(Guid.NewGuid(), room.Id, bookedBy.Trim(), startUtc, endUtc, attendees);
     }
@@ -93,10 +93,13 @@ public sealed class Booking
     public static bool ReachesDailyLimit(int activeBookingsOnSameDay) =>
         activeBookingsOnSameDay >= MaxActiveBookingsPerParticipantPerDay;
 
-    public Result Cancel()
+    public Result Cancel(DateTime nowUtc)
     {
         if (Status == BookingStatus.Cancelled)
             return BookingErrors.AlreadyCancelled;
+
+        if (StartUtc - AsUtc(nowUtc) < MinNoticeForCancellation)
+            return BookingErrors.CancellationTooLate;
 
         Status = BookingStatus.Cancelled;
         return Result.Success();

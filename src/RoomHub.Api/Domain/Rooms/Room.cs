@@ -6,6 +6,12 @@ public sealed class Room
 {
     public const int NameMaxLength = 200;
 
+    public const int LargeRoomCapacityThreshold = 10;
+
+    public static readonly TimeSpan StandardMaxBookingDuration = TimeSpan.FromHours(4);
+
+    public static readonly TimeSpan LargeRoomMaxBookingDuration = TimeSpan.FromHours(2);
+
     private Room()
     {
     }
@@ -35,4 +41,8 @@ public sealed class Room
     }
 
     public bool CanHost(int attendees) => attendees <= Capacity;
+
+    public bool IsLarge => Capacity > LargeRoomCapacityThreshold;
+
+    public TimeSpan MaxBookingDuration => IsLarge ? LargeRoomMaxBookingDuration : StandardMaxBookingDuration;
 }
